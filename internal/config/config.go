@@ -1,5 +1,13 @@
 package config
 
+import (
+	"os"
+	// "github.com/kelseyhightower/envconfig"
+	"gopkg.in/yaml.v3"
+	"log"
+	"strconv"
+)
+
 type GatewayMode string
 
 const (
@@ -76,3 +84,72 @@ var defaultConfig = Config{
 		},
 	},
 }
+
+func Load() (Config, error) {
+	cfg := defaultConfig
+
+	if path := os.Getenv("CONFIG_PATH"); path != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return cfg, err
+		}
+		if err := yaml.Unmarshal(data, &cfg); err != nil {
+			return cfg, err
+		}
+	}
+
+	cfg.Database.Host = os.Getenv("MYSQLHOST")
+
+	if portStr := os.Getenv("MYSQLPORT"); portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil {
+			cfg.Database.Port = port
+		} else {
+			log.Printf("Invalid MYSQLPORT: %v", err)
+		}
+	}
+
+	cfg.Database.User = os.Getenv("MYSQLUSER")
+	cfg.Database.Password = os.Getenv("MYSQLPASSWORD")
+	cfg.Database.Database = "railway"
+	cfg.Database.Timezone = "UTC"
+	cfg.Database.Dialect = "mysql"
+
+	return cfg, nil
+}
+
+
+// func Load() (Config, error) {
+// 	cfg := defaultConfig
+// 	log.Printf("CONFIG_PATH == %s", os.Getenv("CONFIG_PATH"))
+
+// 	if path := os.Getenv("CONFIG_PATH"); path != "" {
+// 		data, err := os.ReadFile(path)
+// 		if err != nil {
+// 			return cfg, err
+// 		}
+// 		if err := yaml.Unmarshal(data, &cfg); err != nil {
+// 			return cfg, err
+// 		}
+// 	}
+
+// 	// Load env vars (fallback or override)
+// 	cfg.Database.Host = os.Getenv("MYSQLHOST")
+
+// 	if portStr := os.Getenv("MYSQLPORT"); portStr != "" {
+// 		if port, err := strconv.Atoi(portStr); err == nil {
+// 			cfg.Database.Port = port
+// 		} else {
+// 			log.Printf("⚠️ Invalid MYSQLPORT: %v", err)
+// 		}
+// 	}
+
+// 	cfg.Database.User = os.Getenv("MYSQLUSER")
+// 	cfg.Database.Password = os.Getenv("MYSQLPASSWORD")
+// 	cfg.Database.Database = "railway"
+// 	cfg.Database.Timezone = "UTC"
+// 	cfg.Database.Dialect = "mysql"
+
+// 	log.Printf("Loaded config: DB host=%s port=%d user=%s", cfg.Database.Host, cfg.Database.Port, cfg.Database.User)
+
+// 	return cfg, nil
+// }

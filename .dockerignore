@@ -30,7 +30,7 @@ Thumbs.db
 
 # Configuration files
 *.env
-*.yml
+# *.yml
 *.yaml
 config.json
 

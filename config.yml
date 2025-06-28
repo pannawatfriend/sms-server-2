@@ -1,0 +1,24 @@
+gateway:
+  mode: private
+  private_token: 123456789
+http:
+  listen: 127.0.0.1:3000
+  proxies:
+    - "127.0.0.1"
+database:
+  dialect: mysql
+  host: 0
+  port: 0
+  user: 0
+  password: 0
+  database: railway
+  timezone: UTC
+  max_open_conns: 4
+  max_idle_conns: 2
+fcm:
+  credentials_json: "{}"
+  timeout_seconds: 1
+  debounce_seconds: 5
+tasks: 
+  hashing:
+    interval_seconds: 15

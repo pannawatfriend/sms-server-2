@@ -8,7 +8,7 @@ import (
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/devices"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/messages"
 	"github.com/android-sms-gateway/server/internal/sms-gateway/modules/push"
-	"github.com/capcom6/go-infra-fx/config"
+	// "github.com/capcom6/go-infra-fx/config"
 	"github.com/capcom6/go-infra-fx/db"
 	"github.com/capcom6/go-infra-fx/http"
 	"go.uber.org/fx"
@@ -18,14 +18,13 @@ import (
 var Module = fx.Module(
 	"appconfig",
 	fx.Provide(
-		func(log *zap.Logger) Config {
-			if err := config.LoadConfig(&defaultConfig); err != nil {
-				log.Error("Error loading config", zap.Error(err))
-			}
-
-			return defaultConfig
-		},
-	),
+	func(log *zap.Logger) Config {
+		cfg, err := Load()
+		if err != nil {
+			log.Error("Error loading config", zap.Error(err))
+		}
+		return cfg
+	}),
 	fx.Provide(func(cfg Config) http.Config {
 		return http.Config{
 			Listen:  cfg.HTTP.Listen,

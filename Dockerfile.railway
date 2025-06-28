@@ -1,0 +1,56 @@
+# Stage 1: Build the binary
+FROM golang:1.23-alpine AS build
+
+ARG APP=sms-gateway
+ARG APP_VERSION=1.0.0
+ARG APP_RELEASE_ID=1
+
+WORKDIR /go/src/app
+
+RUN apk add --no-cache git
+
+# Install swag (for Swagger doc generation)
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+# Copy go.mod/go.sum and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the full source code
+COPY . .
+
+# Optional: Inject version (if you use placeholder in main.go)
+RUN sed -i "s/${APP_VERSION}/${APP_VERSION}/g" ./cmd/${APP}/main.go || true
+
+# Generate swagger docs
+RUN go generate ./...
+
+# Build the application
+RUN CGO_ENABLED=0 go build -a -installsuffix cgo \
+    -ldflags="-w -s -X github.com/android-sms-gateway/server/internal/version.AppVersion=${APP_VERSION} \
+    -X github.com/android-sms-gateway/server/internal/version.AppRelease=${APP_RELEASE_ID}" \
+    -o app ./cmd/${APP}/main.go
+
+# Stage 2: Final image
+FROM alpine:3
+
+WORKDIR /app
+
+RUN apk add --no-cache tzdata
+
+COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# COPY --from=build /app/config.yml /app/config.yml
+COPY --from=build /go/src/app /app
+
+# COPY config.yml /app/config.yml
+# COPY --from=build /go/src/app/config.yml /config.yml
+
+ENV CONFIG_PATH=/app/config.yml
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 --start-period=5s CMD /app/app health || exit 1
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -19,7 +19,7 @@ RUN go mod download
 COPY . .
 
 # Replace {APP_VERSION} with the actual version
-RUN sed -i "s/{APP_VERSION}/${APP_VERSION}/g" ./cmd/${APP}/main.go
+RUN sed -i "s/${APP_VERSION}/${APP_VERSION}/g" ./cmd/${APP}/main.go
 
 # Generate swagger docs
 RUN go generate ./...
